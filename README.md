@@ -71,6 +71,10 @@ If you plan to use TerraMind with multitemporal data, you can use the temporal w
 - [terramind_v1_small_multitemporal_crop.ipynb](notebooks%2Fterramind_v1_small_multitemporal_crop.ipynb)
   ([Open in Colab](https://colab.research.google.com/github/IBM/terramind/blob/main/notebooks/terramind_v1_small_multitemporal_crop.ipynb))
 
+We provide an unfinished notebook for HLS Burn Scars with several TODOs. This way, you can learn to adapt the config/notebook for new datasets.
+- [terramind_v1_small_burnscars.ipynb](notebooks%2Fterramind_v1_small_burnscars.ipynb)
+  ([Open in Colab](https://colab.research.google.com/github/IBM/terramind/blob/main/notebooks/terramind_v1_small_burnscars.ipynb))
+
 ## Thinking-in-Modalities
 
 TerraMind introduces a new Thinking-in-Modalities (TiM) approach, where other modalities are predicted as an intermediate steps.
