@@ -12,35 +12,7 @@ COLORBLIND_RGB = [hex2color(hex) for hex in COLORBLIND_HEX]
 lulc_cmap = LinearSegmentedColormap.from_list('lulc', COLORBLIND_RGB, N=10)
 
 
-def rgb_smooth_quantiles(array, tolerance=0.02, scaling=0.5, default=2000):
-    """
-    array: numpy array with dimensions [C, H, W]
-    returns 0-1 scaled array
-    """
-
-    # Get scaling thresholds for smoothing the brightness
-    limit_low, median, limit_high = np.quantile(array, q=[tolerance, 0.5, 1. - tolerance])
-    limit_high = limit_high.clip(default)  # Scale only pixels above default value
-    limit_low = limit_low.clip(0, 1000)  # Scale only pixels below 1000
-    limit_low = np.where(median > default / 2, limit_low, 0)  # Make image only darker if it is not dark already
-
-    # Smooth very dark and bright values using linear scaling
-    array = np.where(array >= limit_low, array, limit_low + (array - limit_low) * scaling)
-    array = np.where(array <= limit_high, array, limit_high + (array - limit_high) * scaling)
-
-    # Update scaling params using a 10th of the tolerance for max value
-    limit_low, limit_high = np.quantile(array, q=[tolerance/10, 1. - tolerance/10])
-    limit_high = limit_high.clip(default, 20000)  # Scale only pixels above default value
-    limit_low = limit_low.clip(0, 500)  # Scale only pixels below 500
-    limit_low = np.where(median > default / 2, limit_low, 0)  # Make image only darker if it is not dark already
-
-    # Scale data to 0-255
-    array = (array - limit_low) / (limit_high - limit_low)
-
-    return array
-
-
-def s2_to_rgb(data, smooth_quantiles=False):
+def s2_to_rgb(data, smooth_quantiles=False, gamma=0.7):
     if isinstance(data, torch.Tensor):
         # to numpy
         data = data.clone().cpu().numpy()
@@ -57,12 +29,19 @@ def s2_to_rgb(data, smooth_quantiles=False):
         rgb = data[[3, 2, 1]].transpose((1, 2, 0))
 
     if smooth_quantiles:
-        rgb = rgb_smooth_quantiles(rgb)
+        min_value, q99_value = np.quantile(rgb, q=[0., 0.99])
+        min_value = min_value.clip(0, 1000) # Clip scaling
+        q99_value = q99_value.clip(2000, 20000)
+        rgb = (rgb - min_value) / (q99_value - min_value + 1e-6)
     else:
         rgb = rgb / 2000
 
+    rgb = rgb.clip(0, 1)
+    if gamma is not None:
+        rgb = np.power(rgb, gamma)
+
     # to uint8
-    rgb = (rgb * 255).round().clip(0, 255).astype(np.uint8)
+    rgb = (rgb * 255).round().astype(np.uint8)
 
     return rgb
 
@@ -173,8 +152,8 @@ def coords_to_text(data):
         return f'lon={data[0]:.2f}, lat={data[1]:.2f}'
 
 
-def plot_s2(data, ax=None, smooth_quantiles=False, *args, **kwargs):
-    rgb = s2_to_rgb(data, smooth_quantiles=smooth_quantiles)
+def plot_s2(data, ax=None, smooth_quantiles=False, gamma=0.7, *args, **kwargs):
+    rgb = s2_to_rgb(data, smooth_quantiles=smooth_quantiles, gamma=gamma)
 
     if ax is None:
         plt.imshow(rgb)
