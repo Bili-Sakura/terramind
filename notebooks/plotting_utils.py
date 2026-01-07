@@ -12,7 +12,7 @@ COLORBLIND_RGB = [hex2color(hex) for hex in COLORBLIND_HEX]
 lulc_cmap = LinearSegmentedColormap.from_list('lulc', COLORBLIND_RGB, N=10)
 
 
-def s2_to_rgb(data, smooth_quantiles=False, gamma=0.7):
+def s2_to_rgb(data, smooth_quantiles=True, gamma=0.7):
     if isinstance(data, torch.Tensor):
         # to numpy
         data = data.clone().cpu().numpy()
@@ -152,7 +152,7 @@ def coords_to_text(data):
         return f'lon={data[0]:.2f}, lat={data[1]:.2f}'
 
 
-def plot_s2(data, ax=None, smooth_quantiles=False, gamma=0.7, *args, **kwargs):
+def plot_s2(data, ax=None, smooth_quantiles=True, gamma=0.7, *args, **kwargs):
     rgb = s2_to_rgb(data, smooth_quantiles=smooth_quantiles, gamma=gamma)
 
     if ax is None:
