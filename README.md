@@ -105,6 +105,57 @@ For larger tiles, you can used the tiled inference provided by TerraTorch which 
 TerraMind uses six tokenizer for pre-training and generation. 
 We provide some example code for using the tokenizer in [terramind_tokenizer_reconstruction.ipynb](notebooks%2Fterramind_tokenizer_reconstruction.ipynb).
 
+### Tokenizer quick use
+
+If you only want to use the TerraMind tokenizers quickly, use the Hugging Face checkpoints directly.
+
+Tokenizer collection:
+`https://huggingface.co/collections/BiliSakura/terramind-10-tokenizer-diffusers-collections`
+
+Install minimal dependencies:
+
+```shell
+pip install torch safetensors einops huggingface_hub
+```
+
+Download one tokenizer checkpoint:
+
+```python
+from huggingface_hub import snapshot_download
+
+local_dir = snapshot_download(
+    repo_id="BiliSakura/TerraMind-1.0-Tokenizer-DEM",  # change model id as needed
+)
+print(local_dir)
+```
+
+Load and tokenize:
+
+```python
+import sys
+from pathlib import Path
+import torch
+
+model_dir = Path(local_dir)
+sys.path.insert(0, str(model_dir))
+
+from terramind_tokenizer import TerraMindTokenizer
+
+tok = TerraMindTokenizer.from_pretrained(str(model_dir), device="cpu")
+
+# DEM example input: 1 channel, 256x256
+x = torch.randn(1, 1, 256, 256)
+tokens = tok.tokenize(x)
+print(tokens.shape)
+```
+
+Input-channel notes (check each checkpoint `config.json` for exact settings):
+
+- `DEM`: 1 channel
+- `NDVI`: 1 channel
+- `LULC`: label/class map input
+- `S1GRD`, `S1RTC`, `S2L2A`: modality-specific channels
+
 ## Challenge
 
 Already working with TerraMind? Submit your use case to the [TerraMind Blue-Sky Challenge](https://huggingface.co/spaces/ibm-esa-geospatial/challenge), a bi-monthly award spotlighting the boldest, most imaginative ways using TerraMind.
