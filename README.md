@@ -115,33 +115,42 @@ Tokenizer collection:
 Install minimal dependencies:
 
 ```shell
-pip install torch safetensors einops huggingface_hub
+pip install torch safetensors einops huggingface_hub diffusers
 ```
 
-Download one tokenizer checkpoint:
+**Option 1: AutoModel (trust_remote_code)** — simplest, no manual download:
+
+```python
+from diffusers import AutoModel
+import torch
+
+tok = AutoModel.from_pretrained(
+    "BiliSakura/TerraMind-1.0-Tokenizer-DEM",  # change model id as needed
+    trust_remote_code=True,
+    torch_dtype=torch.float32,
+    device="cpu",
+)
+
+# DEM example input: 1 channel, 256x256
+x = torch.randn(1, 1, 256, 256)
+tokens = tok.tokenize(x)
+print(tokens.shape)
+```
+
+**Option 2: TerraMindTokenizer** — explicit class, requires repo in path:
 
 ```python
 from huggingface_hub import snapshot_download
-
-local_dir = snapshot_download(
-    repo_id="BiliSakura/TerraMind-1.0-Tokenizer-DEM",  # change model id as needed
-)
-print(local_dir)
-```
-
-Load and tokenize:
-
-```python
 import sys
 from pathlib import Path
 import torch
 
-model_dir = Path(local_dir)
-sys.path.insert(0, str(model_dir))
+local_dir = snapshot_download(repo_id="BiliSakura/TerraMind-1.0-Tokenizer-DEM")
+sys.path.insert(0, str(local_dir))
 
 from terramind_tokenizer import TerraMindTokenizer
 
-tok = TerraMindTokenizer.from_pretrained(str(model_dir), device="cpu")
+tok = TerraMindTokenizer.from_pretrained(str(local_dir), device="cpu")
 
 # DEM example input: 1 channel, 256x256
 x = torch.randn(1, 1, 256, 256)
